@@ -3,6 +3,7 @@ import com.google.devtools.ksp.configureKtlintApplyToIdea
 import org.jetbrains.kotlin.gradle.dsl.JvmTarget
 import org.jetbrains.kotlin.gradle.dsl.KotlinJvmProjectExtension
 import org.jetbrains.kotlin.gradle.dsl.KotlinVersion
+import java.security.MessageDigest
 
 val sonatypeUserName: String? by project
 val sonatypePassword: String? by project
@@ -14,10 +15,11 @@ if (extra.has("kspOnlyVersion") && kotlinBaseVersion != null) {
 }
 
 if (!extra.has("kspVersion")) {
-    extra.set("kspVersion", "2.0.255-SNAPSHOT")
+    extra.set("kspVersion", "2.0.255")
 }
 
 repositories {
+    mavenLocal()
     mavenCentral()
     maven("https://maven.pkg.jetbrains.space/kotlin/p/kotlin/bootstrap/")
 }
@@ -49,6 +51,7 @@ subprojects {
     version = rootProject.extra.get("kspVersion") as String
     configureKtlint()
     repositories {
+        mavenLocal()
         mavenCentral()
         google()
         maven("https://maven.pkg.jetbrains.space/kotlin/p/kotlin/bootstrap/")
@@ -119,5 +122,28 @@ subprojects {
 
     tasks.withType<org.jetbrains.kotlin.gradle.tasks.KotlinCompile>().configureEach {
         compilerOptions.freeCompilerArgs.add("-Xskip-prerelease-check")
+    }
+
+
+// Add a task to generate SHA-1 and MD5 checksums for the published files
+    tasks.withType<PublishToMavenLocal>().configureEach {
+        finalizedBy("generateChecksums")
+    }
+
+    tasks.register("generateChecksums") {
+        doLast {
+            println("Generating checksums for ${project.name}")
+            val repoDir = file("${System.getProperty("user.home")}/.m2/repository/com/google/devtools/ksp/${project.name}/2.0.255/")
+
+            repoDir.listFiles()?.filter { it.name.endsWith(".pom") || it.name.endsWith(".jar") }?.forEach { file ->
+                // Generate SHA-1 checksum
+                val sha1File = File(file.absolutePath + ".sha1")
+                sha1File.writeText(file.inputStream().use { MessageDigest.getInstance("SHA-1").digest(it.readBytes()).joinToString("") { byte -> "%02x".format(byte) } })
+
+                // Generate MD5 checksum
+                val md5File = File(file.absolutePath + ".md5")
+                md5File.writeText(file.inputStream().use { MessageDigest.getInstance("MD5").digest(it.readBytes()).joinToString("") { byte -> "%02x".format(byte) } })
+            }
+        }
     }
 }

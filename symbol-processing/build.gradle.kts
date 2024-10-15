@@ -1,5 +1,6 @@
 import com.github.jengelman.gradle.plugins.shadow.tasks.ShadowJar
 import org.gradle.jvm.tasks.Jar
+import java.security.MessageDigest
 
 evaluationDependsOn(":common-util")
 evaluationDependsOn(":compiler-plugin")

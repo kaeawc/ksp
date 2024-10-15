@@ -7,7 +7,7 @@ plugins {
     kotlin("jvm")
 }
 
-version = "2.0.255-SNAPSHOT"
+version = "2.0.255"
 
 repositories {
     maven("https://maven.pkg.jetbrains.space/kotlin/p/kotlin/kotlin-ide-plugin-dependencies")
